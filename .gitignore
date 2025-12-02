@@ -1,0 +1,12 @@
+# ide
+.vscode
+.idea
+
+# Python
+python/**/__pycache__
+python/**.pyc
+python/**.egg-info
+python/build
+python/.ipynb_checkpoints
+python/.venv
+python/dist
