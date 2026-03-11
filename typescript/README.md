@@ -15,12 +15,12 @@ pnpm run build
 The library provides three main exports:
 
 - **`constructGraphFromRowsResult(response)`** — converts a `ConceptRowsQueryResponse` (from `@typedb/driver-http`) into a `DataGraph`, a structured representation of the vertices and constraints in the query result.
-- **`ILogicalGraphConverter`** — an interface you implement to define how each constraint type (e.g. `isa`, `has`, `links`, `sub`) is handled.
+- **`TypeDBAnswerConverter`** — an interface you implement to define how each constraint type (e.g. `isa`, `has`, `links`, `sub`) is handled.
 - **`convertLogicalGraphWith(dataGraph, converter)`** — walks a `DataGraph` and calls the appropriate method on your converter for each constraint.
 
 ### Example usage
 ```typescript
-import { constructGraphFromRowsResult, convertLogicalGraphWith, ILogicalGraphConverter } from "typedb-visualizer-tutorial";
+import { constructGraphFromRowsResult, convertLogicalGraphWith, TypeDBAnswerConverter } from "typedb-visualizer-tutorial";
 
 // 1. Run a query against TypeDB via the HTTP API with includeQueryStructure: true
 const response: ConceptRowsQueryResponse = /* ... */;
@@ -28,8 +28,8 @@ const response: ConceptRowsQueryResponse = /* ... */;
 // 2. Build a DataGraph from the response
 const dataGraph = constructGraphFromRowsResult(response);
 
-// 3. Implement ILogicalGraphConverter and walk the graph
-const converter: ILogicalGraphConverter = /* your implementation */;
+// 3. Implement TypeDBAnswerConverter and walk the graph
+const converter: TypeDBAnswerConverter = /* your implementation */;
 convertLogicalGraphWith(dataGraph, converter);
 ```
 

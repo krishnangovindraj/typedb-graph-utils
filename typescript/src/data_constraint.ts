@@ -1,0 +1,219 @@
+///////////////////////
+// TypeDB Data Graph //
+///////////////////////
+import {
+    Attribute,
+    AttributeType,
+    Concept, ConstraintComparison, ConstraintExpression, ConstraintExpressionLegacy, ConstraintFunction,
+    ConstraintHas, ConstraintIid, ConstraintIs,
+    ConstraintIsa,
+    ConstraintIsaExact, ConstraintKind, ConstraintLabel,
+    ConstraintLinks,
+    ConstraintLinksLegacy,
+    ConstraintOwns,
+    ConstraintPlays,
+    ConstraintRelates,
+    ConstraintSpan,
+    ConstraintSub,
+    ConstraintSubExact, ConstraintValue,
+    Entity,
+    EntityType,
+    InstantiableType,
+    Relation,
+    RelationType,
+    RoleType,
+    Type, Value
+} from "@typedb/driver-http";
+
+export type VertexUnavailable = { kind: "unavailable", variable: string, answerIndex: number, vertex_map_key: string };
+export type DataVertex = Concept | VertexUnavailable;
+export type QueryCoordinates = { branch: number, constraint: number };
+
+export type DataGraph = {
+    answers: DataConstraintAny[][];
+}
+
+export type DataConstraintAny = DataConstraintIsa | DataConstraintIsaExact | DataConstraintHas | DataConstraintLinks |
+    DataConstraintSub | DataConstraintSubExact | DataConstraintOwns | DataConstraintRelates | DataConstraintPlays |
+    DataConstraintExpression | DataConstraintFunction | DataConstraintComparison |
+    DataConstraintIs | DataConstraintIid | DataConstraintLabel | DataConstraintValue | DataConstraintKind;
+
+export type DataConstraintSpan = ConstraintSpan;
+
+// Instance
+export interface DataConstraintIsa {
+    tag: "isa",
+    textSpan: DataConstraintSpan,
+    queryCoordinates: QueryCoordinates,
+    queryConstraint: ConstraintIsa,
+
+    instance: Entity | Relation | Attribute | VertexUnavailable,
+    type: InstantiableType | VertexUnavailable,
+}
+
+export interface DataConstraintIsaExact {
+    tag: "isa!",
+    textSpan: DataConstraintSpan,
+    queryCoordinates: QueryCoordinates,
+    queryConstraint: ConstraintIsaExact,
+
+    instance: Entity | Relation | Attribute | VertexUnavailable,
+    type: InstantiableType | VertexUnavailable,
+}
+
+export interface DataConstraintHas {
+    tag: "has",
+    textSpan: DataConstraintSpan,
+    queryCoordinates: QueryCoordinates,
+    queryConstraint: ConstraintHas,
+
+    owner: Entity | Relation | VertexUnavailable,
+    attribute: Attribute | VertexUnavailable,
+}
+
+
+export interface DataConstraintLinks {
+    tag: "links",
+    textSpan: DataConstraintSpan,
+    queryCoordinates: QueryCoordinates,
+    queryConstraint: ConstraintLinks | ConstraintLinksLegacy,
+
+    relation: Relation | VertexUnavailable,
+    player: Relation | Entity | VertexUnavailable,
+    role: RoleType | VertexUnavailable,
+}
+
+// Type
+export interface DataConstraintSub {
+    tag: "sub",
+    textSpan: DataConstraintSpan,
+    queryCoordinates: QueryCoordinates,
+    queryConstraint: ConstraintSub,
+
+    subtype: Type | VertexUnavailable,
+    supertype: Type | VertexUnavailable,
+}
+
+export interface DataConstraintSubExact {
+    tag: "sub!",
+    textSpan: DataConstraintSpan,
+    queryCoordinates: QueryCoordinates,
+    queryConstraint: ConstraintSubExact,
+
+    subtype: Type | VertexUnavailable,
+    supertype: Type | VertexUnavailable,
+}
+
+export interface DataConstraintOwns {
+    tag: "owns",
+    textSpan: DataConstraintSpan,
+    queryCoordinates: QueryCoordinates,
+    queryConstraint: ConstraintOwns,
+
+    owner: EntityType | RelationType | VertexUnavailable,
+    attribute: AttributeType | VertexUnavailable,
+}
+
+export interface DataConstraintRelates {
+    tag: "relates",
+    textSpan: DataConstraintSpan,
+    queryCoordinates: QueryCoordinates,
+    queryConstraint: ConstraintRelates,
+
+    relation: RelationType | VertexUnavailable,
+    role: RoleType | VertexUnavailable,
+}
+
+export interface DataConstraintPlays {
+    tag: "plays",
+    textSpan: DataConstraintSpan,
+    queryCoordinates: QueryCoordinates,
+    queryConstraint: ConstraintPlays,
+
+    player: EntityType | RelationType | VertexUnavailable,
+    role: RoleType | VertexUnavailable,
+}
+
+// Function
+export interface DataConstraintExpression {
+    tag: "expression",
+    textSpan: DataConstraintSpan,
+    queryCoordinates: QueryCoordinates,
+    queryConstraint: ConstraintExpression | ConstraintExpressionLegacy,
+
+    text: string,
+    arguments: (Entity | Relation | Attribute | Value | VertexUnavailable)[],
+    assigned: (Entity | Relation | Attribute | Value | VertexUnavailable),
+}
+
+export interface DataConstraintFunction {
+    tag: "function",
+    textSpan: DataConstraintSpan,
+    queryCoordinates: QueryCoordinates,
+    queryConstraint: ConstraintFunction,
+
+    name: string,
+    arguments: (Entity | Relation | Attribute | Value | VertexUnavailable)[],
+    assigned: (Entity | Relation | Attribute | Value | VertexUnavailable)[],
+}
+
+export interface DataConstraintComparison {
+    tag: "comparison",
+    textSpan: DataConstraintSpan,
+    queryCoordinates: QueryCoordinates,
+    queryConstraint: ConstraintComparison,
+
+    lhs: Value | Attribute | VertexUnavailable,
+    rhs: Value | Attribute | VertexUnavailable,
+    comparator: string,
+}
+
+export interface DataConstraintIs {
+    tag: "is",
+    textSpan: DataConstraintSpan,
+    queryCoordinates: QueryCoordinates,
+    queryConstraint: ConstraintIs,
+
+    lhs: Concept | VertexUnavailable,
+    rhs: Concept | VertexUnavailable,
+}
+
+export interface DataConstraintIid {
+    tag: "iid",
+    textSpan: DataConstraintSpan,
+    queryCoordinates: QueryCoordinates,
+    queryConstraint: ConstraintIid,
+
+    concept: Concept | VertexUnavailable,
+    iid: string,
+}
+
+export interface DataConstraintLabel {
+    tag: "label",
+    textSpan: DataConstraintSpan,
+    queryCoordinates: QueryCoordinates,
+    queryConstraint: ConstraintLabel,
+
+    type: Type | VertexUnavailable,
+    label: string,
+}
+
+export interface DataConstraintValue {
+    tag: "value",
+    textSpan: DataConstraintSpan,
+    queryCoordinates: QueryCoordinates,
+    queryConstraint: ConstraintValue,
+
+    attributeType: AttributeType | VertexUnavailable,
+    valueType: string,
+}
+
+export interface DataConstraintKind {
+    tag: "kind",
+    textSpan: DataConstraintSpan,
+    queryCoordinates: QueryCoordinates,
+    queryConstraint: ConstraintKind,
+
+    kind: string,
+    type: Type | VertexUnavailable,
+}

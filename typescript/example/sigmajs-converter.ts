@@ -7,8 +7,8 @@ import {
     DataConstraintPlays, DataConstraintExpression, DataConstraintFunction,
     DataConstraintKind, DataConstraintComparison, DataConstraintIs, DataConstraintIid,
     DataConstraintLabel, DataConstraintValue, VertexUnavailable,
-} from "../src/rows2graph";
-import { ILogicalGraphConverter } from "../src/converter";
+} from "../src";
+import { TypeDBAnswerConverter } from "../src";
 
 export type VertexExpression = { tag: "expression", kind: "expression", repr: string, answerIndex: number, vertex_map_key: string };
 export type VertexFunction = { tag: "functionCall", kind: "functionCall", repr: string, answerIndex: number, vertex_map_key: string };
@@ -64,7 +64,7 @@ function vertexMapKey(vertex: DataVertex): string {
     }
 }
 
-export class SigmaConverter implements ILogicalGraphConverter {
+export class SigmaConverter implements TypeDBAnswerConverter {
     constructor(public readonly graph: MultiGraph) {}
 
     private addVertex(vertex: DataVertex): string {

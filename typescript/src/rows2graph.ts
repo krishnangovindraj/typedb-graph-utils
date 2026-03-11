@@ -1,240 +1,44 @@
 import {
     Attribute, AttributeType, Concept, ConceptRow, ConceptRowsQueryResponse, Entity, EntityType, InstantiableType,
-    getVariableName, ConstraintComparison, ConstraintExpression, ConstraintFunction,
-    ConstraintHas, ConstraintIid, ConstraintIs, ConstraintIsa, ConstraintIsaExact, ConstraintKind,
-    ConstraintLabel, ConstraintLinks, ConstraintOwns, ConstraintPlays, ConstraintRelates,
-    ConstraintSpan, ConstraintSub, ConstraintSubExact, ConstraintValue, ConstraintVertexAny,
-    ConstraintExpressionLegacy, ConstraintLinksLegacy,
-    Relation, RelationType, RoleType, Type,  Value, AnalyzedPipeline, ConstraintAny
+    getVariableName, ConstraintVertexAny,
+    Relation, RelationType, RoleType, Type, Value, AnalyzedPipeline, ConstraintAny, ConceptRowAnswer
 } from "@typedb/driver-http";
+import {DataConstraintAny, DataGraph, DataVertex, QueryCoordinates, VertexUnavailable} from "./data_constraint";
+import {TypeDBAnswerConverter} from "./converter";
 
-///////////////////////
-// TypeDB Data Graph //
-///////////////////////
-export type VertexUnavailable = { kind: "unavailable", variable: string, answerIndex: number, vertex_map_key: string };
-export type DataVertex = Concept | VertexUnavailable;
-export type QueryCoordinates = { branch: number, constraint: number };
-
-export type DataGraph = {
-    answers: DataConstraintAny[][];
+// TODO: Remove this function and just export DataGraphBuilder
+export function constructDataGraphFromRowsResult(rows_result: ConceptRowsQueryResponse): DataGraph {
+    return DataGraphBuilder.build(rows_result);
 }
 
-export type DataConstraintAny = DataConstraintIsa | DataConstraintIsaExact | DataConstraintHas | DataConstraintLinks |
-    DataConstraintSub | DataConstraintSubExact | DataConstraintOwns | DataConstraintRelates | DataConstraintPlays |
-    DataConstraintExpression | DataConstraintFunction | DataConstraintComparison |
-    DataConstraintIs | DataConstraintIid | DataConstraintLabel | DataConstraintValue | DataConstraintKind;
-
-export type DataConstraintSpan = ConstraintSpan;
-
-// Instance
-export interface DataConstraintIsa {
-    tag: "isa",
-    textSpan: DataConstraintSpan,
-    queryCoordinates: QueryCoordinates,
-    queryConstraint: ConstraintIsa,
-
-    instance: Entity | Relation | Attribute | VertexUnavailable,
-    type: InstantiableType | VertexUnavailable,
-}
-
-export interface DataConstraintIsaExact {
-    tag: "isa!",
-    textSpan: DataConstraintSpan,
-    queryCoordinates: QueryCoordinates,
-    queryConstraint: ConstraintIsaExact,
-
-    instance: Entity | Relation | Attribute | VertexUnavailable,
-    type: InstantiableType | VertexUnavailable,
-}
-
-export interface DataConstraintHas {
-    tag: "has",
-    textSpan: DataConstraintSpan,
-    queryCoordinates: QueryCoordinates,
-    queryConstraint: ConstraintHas,
-
-    owner: Entity | Relation | VertexUnavailable,
-    attribute: Attribute | VertexUnavailable,
-}
-
-
-export interface DataConstraintLinks {
-    tag: "links",
-    textSpan: DataConstraintSpan,
-    queryCoordinates: QueryCoordinates,
-    queryConstraint: ConstraintLinks | ConstraintLinksLegacy,
-
-    relation: Relation | VertexUnavailable,
-    player: Relation | Entity | VertexUnavailable,
-    role: RoleType | VertexUnavailable,
-}
-
-// Type
-export interface DataConstraintSub {
-    tag: "sub",
-    textSpan: DataConstraintSpan,
-    queryCoordinates: QueryCoordinates,
-    queryConstraint: ConstraintSub,
-
-    subtype: Type | VertexUnavailable,
-    supertype: Type | VertexUnavailable,
-}
-
-export interface DataConstraintSubExact {
-    tag: "sub!",
-    textSpan: DataConstraintSpan,
-    queryCoordinates: QueryCoordinates,
-    queryConstraint: ConstraintSubExact,
-
-    subtype: Type | VertexUnavailable,
-    supertype: Type | VertexUnavailable,
-}
-
-export interface DataConstraintOwns {
-    tag: "owns",
-    textSpan: DataConstraintSpan,
-    queryCoordinates: QueryCoordinates,
-    queryConstraint: ConstraintOwns,
-
-    owner: EntityType | RelationType | VertexUnavailable,
-    attribute: AttributeType | VertexUnavailable,
-}
-
-export interface DataConstraintRelates {
-    tag: "relates",
-    textSpan: DataConstraintSpan,
-    queryCoordinates: QueryCoordinates,
-    queryConstraint: ConstraintRelates,
-
-    relation: RelationType | VertexUnavailable,
-    role: RoleType | VertexUnavailable,
-}
-
-export interface DataConstraintPlays {
-    tag: "plays",
-    textSpan: DataConstraintSpan,
-    queryCoordinates: QueryCoordinates,
-    queryConstraint: ConstraintPlays,
-
-    player: EntityType | RelationType | VertexUnavailable,
-    role: RoleType | VertexUnavailable,
-}
-
-// Function
-export interface DataConstraintExpression {
-    tag: "expression",
-    textSpan: DataConstraintSpan,
-    queryCoordinates: QueryCoordinates,
-    queryConstraint: ConstraintExpression | ConstraintExpressionLegacy,
-
-    text: string,
-    arguments: (Entity | Relation | Attribute | Value | VertexUnavailable)[],
-    assigned: (Entity | Relation | Attribute | Value | VertexUnavailable),
-}
-
-export interface DataConstraintFunction {
-    tag: "function",
-    textSpan: DataConstraintSpan,
-    queryCoordinates: QueryCoordinates,
-    queryConstraint: ConstraintFunction,
-
-    name: string,
-    arguments: (Entity | Relation | Attribute | Value | VertexUnavailable)[],
-    assigned: (Entity | Relation | Attribute | Value | VertexUnavailable)[],
-}
-
-export interface DataConstraintComparison {
-    tag: "comparison",
-    textSpan: DataConstraintSpan,
-    queryCoordinates: QueryCoordinates,
-    queryConstraint: ConstraintComparison,
-
-    lhs: Value | Attribute | VertexUnavailable,
-    rhs: Value | Attribute | VertexUnavailable,
-    comparator: string,
-}
-
-export interface DataConstraintIs {
-    tag: "is",
-    textSpan: DataConstraintSpan,
-    queryCoordinates: QueryCoordinates,
-    queryConstraint: ConstraintIs,
-
-    lhs: Concept | VertexUnavailable,
-    rhs: Concept | VertexUnavailable,
-}
-
-export interface DataConstraintIid {
-    tag: "iid",
-    textSpan: DataConstraintSpan,
-    queryCoordinates: QueryCoordinates,
-    queryConstraint: ConstraintIid,
-
-    concept: Concept | VertexUnavailable,
-    iid: string,
-}
-
-export interface DataConstraintLabel {
-    tag: "label",
-    textSpan: DataConstraintSpan,
-    queryCoordinates: QueryCoordinates,
-    queryConstraint: ConstraintLabel,
-
-    type: Type | VertexUnavailable,
-    label: string,
-}
-
-export interface DataConstraintValue {
-    tag: "value",
-    textSpan: DataConstraintSpan,
-    queryCoordinates: QueryCoordinates,
-    queryConstraint: ConstraintValue,
-
-    attributeType: AttributeType | VertexUnavailable,
-    valueType: string,
-}
-
-export interface DataConstraintKind {
-    tag: "kind",
-    textSpan: DataConstraintSpan,
-    queryCoordinates: QueryCoordinates,
-    queryConstraint: ConstraintKind,
-
-    kind: string,
-    type: Type | VertexUnavailable,
-
-}
-///////////////////////////////////
-// TypeDB server -> logical graph
-///////////////////////////////////
-export function constructGraphFromRowsResult(rows_result: ConceptRowsQueryResponse): DataGraph {
-    return new LogicalGraphBuilder().build(rows_result);
-}
-
-class LogicalGraphBuilder {
-    constructor() {
+export class DataGraphBuilder {
+    structure: AnalyzedPipeline;
+    constructor(structure: AnalyzedPipeline) {
+        this.structure = structure;
     }
 
-    build(rows_result: ConceptRowsQueryResponse): DataGraph {
+    static build(rows_result: ConceptRowsQueryResponse): DataGraph {
+        let builder = new DataGraphBuilder(rows_result.query!);
         let answers: DataConstraintAny[][] = [];
         rows_result.answers.forEach((row, answerIndex) => {
-            let current_answer_edges = row.involvedBlocks!.flatMap(branchIndex => {
-                return rows_result.query!.conjunctions[branchIndex].constraints.map((constraint, constraintIndex) => {
-                    return this.toDataConstraint(rows_result.query!, answerIndex, constraint, row.data, {
-                        branch: branchIndex,
-                        constraint: constraintIndex
-                    });
-                }).filter(x => x != null);
-            });
-            answers.push(current_answer_edges);
+            answers.push(builder.buildAnswer(answerIndex, row));
         });
         return {answers: answers};
     }
 
-    translate_vertex(structure: AnalyzedPipeline, structure_vertex: ConstraintVertexAny, answerIndex: number, data: ConceptRow): DataVertex {
+    buildAnswer(answerIndex: number, row: ConceptRowAnswer): DataConstraintAny[] {
+        return row.involvedBlocks!.flatMap(branchIndex => {
+            return this.structure.conjunctions[branchIndex].constraints.map((constraint, constraintIndex) => {
+                let queryCoordinates = { branch: branchIndex, constraint: constraintIndex };
+                return this.toDataConstraint(answerIndex, constraint, row.data, queryCoordinates);
+            }).filter(x => x != null);
+        });
+    }
+
+    private translate_vertex(structure_vertex: ConstraintVertexAny, answerIndex: number, data: ConceptRow): DataVertex {
         switch (structure_vertex.tag) {
             case "variable": {
-                let name = getVariableName(structure, structure_vertex);
+                let name = getVariableName(this.structure, structure_vertex);
                 if (name != null && data[name] != null ) {
                     return data[name]!;
                 } else {
@@ -261,7 +65,7 @@ class LogicalGraphBuilder {
         }
     }
 
-    private toDataConstraint(structure: AnalyzedPipeline, answerIndex: number, constraint: ConstraintAny, data: ConceptRow, coordinates: QueryCoordinates): DataConstraintAny | null{
+    private toDataConstraint(answerIndex: number, constraint: ConstraintAny, data: ConceptRow, coordinates: QueryCoordinates): DataConstraintAny | null{
         switch (constraint.tag) {
             case "isa": {
                 return {
@@ -270,8 +74,8 @@ class LogicalGraphBuilder {
                     queryCoordinates: coordinates,
                     queryConstraint: constraint,
 
-                    instance: this.translate_vertex(structure, constraint.instance, answerIndex, data) as (Entity | Relation | Attribute | VertexUnavailable),
-                    type: this.translate_vertex(structure, constraint.type, answerIndex, data) as (InstantiableType | VertexUnavailable),
+                    instance: this.translate_vertex(constraint.instance, answerIndex, data) as (Entity | Relation | Attribute | VertexUnavailable),
+                    type: this.translate_vertex(constraint.type, answerIndex, data) as (InstantiableType | VertexUnavailable),
                 }
             }
             case "isa!": {
@@ -281,8 +85,8 @@ class LogicalGraphBuilder {
                     queryCoordinates: coordinates,
                     queryConstraint: constraint,
 
-                    instance: this.translate_vertex(structure, constraint.instance, answerIndex, data) as (Entity | Relation | Attribute | VertexUnavailable),
-                    type: this.translate_vertex(structure, constraint.type, answerIndex, data) as (InstantiableType | VertexUnavailable),
+                    instance: this.translate_vertex(constraint.instance, answerIndex, data) as (Entity | Relation | Attribute | VertexUnavailable),
+                    type: this.translate_vertex(constraint.type, answerIndex, data) as (InstantiableType | VertexUnavailable),
                 }
             }
             case "has": {
@@ -292,8 +96,8 @@ class LogicalGraphBuilder {
                     queryCoordinates: coordinates,
                     queryConstraint: constraint,
 
-                    owner: this.translate_vertex(structure, constraint.owner, answerIndex, data) as (Entity | Relation | VertexUnavailable),
-                    attribute: this.translate_vertex(structure, constraint.attribute, answerIndex, data) as (Attribute | VertexUnavailable),
+                    owner: this.translate_vertex(constraint.owner, answerIndex, data) as (Entity | Relation | VertexUnavailable),
+                    attribute: this.translate_vertex(constraint.attribute, answerIndex, data) as (Attribute | VertexUnavailable),
                 }
             }
             case "links": {
@@ -303,9 +107,9 @@ class LogicalGraphBuilder {
                     queryCoordinates: coordinates,
                     queryConstraint: constraint,
 
-                    relation: this.translate_vertex(structure, constraint.relation, answerIndex, data) as (Relation | VertexUnavailable),
-                    player: this.translate_vertex(structure, constraint.player, answerIndex, data) as (Entity | Relation | VertexUnavailable),
-                    role: this.translate_vertex(structure, constraint.role, answerIndex, data) as (RoleType | VertexUnavailable),
+                    relation: this.translate_vertex(constraint.relation, answerIndex, data) as (Relation | VertexUnavailable),
+                    player: this.translate_vertex(constraint.player, answerIndex, data) as (Entity | Relation | VertexUnavailable),
+                    role: this.translate_vertex(constraint.role, answerIndex, data) as (RoleType | VertexUnavailable),
                 }
             }
             case "sub": {
@@ -315,8 +119,8 @@ class LogicalGraphBuilder {
                     queryCoordinates: coordinates,
                     queryConstraint: constraint,
 
-                    subtype: this.translate_vertex(structure, constraint.subtype, answerIndex, data) as (Type | VertexUnavailable),
-                    supertype: this.translate_vertex(structure, constraint.supertype, answerIndex, data) as (Type | VertexUnavailable),
+                    subtype: this.translate_vertex(constraint.subtype, answerIndex, data) as (Type | VertexUnavailable),
+                    supertype: this.translate_vertex(constraint.supertype, answerIndex, data) as (Type | VertexUnavailable),
                 }
             }
             case "sub!": {
@@ -326,8 +130,8 @@ class LogicalGraphBuilder {
                     queryCoordinates: coordinates,
                     queryConstraint: constraint,
 
-                    subtype: this.translate_vertex(structure, constraint.subtype, answerIndex, data) as (Type | VertexUnavailable),
-                    supertype: this.translate_vertex(structure, constraint.supertype, answerIndex, data) as (Type | VertexUnavailable),
+                    subtype: this.translate_vertex(constraint.subtype, answerIndex, data) as (Type | VertexUnavailable),
+                    supertype: this.translate_vertex(constraint.supertype, answerIndex, data) as (Type | VertexUnavailable),
                 }
             }
             case "owns": {
@@ -337,8 +141,8 @@ class LogicalGraphBuilder {
                     queryCoordinates: coordinates,
                     queryConstraint: constraint,
 
-                    owner: this.translate_vertex(structure, constraint.owner, answerIndex, data) as (EntityType | RelationType | VertexUnavailable),
-                    attribute: this.translate_vertex(structure, constraint.attribute, answerIndex, data) as (AttributeType | VertexUnavailable),
+                    owner: this.translate_vertex(constraint.owner, answerIndex, data) as (EntityType | RelationType | VertexUnavailable),
+                    attribute: this.translate_vertex(constraint.attribute, answerIndex, data) as (AttributeType | VertexUnavailable),
                 }
             }
             case "relates": {
@@ -348,8 +152,8 @@ class LogicalGraphBuilder {
                     queryCoordinates: coordinates,
                     queryConstraint: constraint,
 
-                    relation: this.translate_vertex(structure, constraint.relation, answerIndex, data) as (RelationType | VertexUnavailable),
-                    role: this.translate_vertex(structure, constraint.role, answerIndex, data) as (RoleType | VertexUnavailable),
+                    relation: this.translate_vertex(constraint.relation, answerIndex, data) as (RelationType | VertexUnavailable),
+                    role: this.translate_vertex(constraint.role, answerIndex, data) as (RoleType | VertexUnavailable),
                 }
             }
             case "plays": {
@@ -359,8 +163,8 @@ class LogicalGraphBuilder {
                     queryCoordinates: coordinates,
                     queryConstraint: constraint,
 
-                    player: this.translate_vertex(structure, constraint.player, answerIndex, data) as (EntityType | RelationType | VertexUnavailable),
-                    role: this.translate_vertex(structure, constraint.role, answerIndex, data) as (RoleType | VertexUnavailable),
+                    player: this.translate_vertex(constraint.player, answerIndex, data) as (EntityType | RelationType | VertexUnavailable),
+                    role: this.translate_vertex(constraint.role, answerIndex, data) as (RoleType | VertexUnavailable),
                 }
             }
             case "expression": {
@@ -371,8 +175,8 @@ class LogicalGraphBuilder {
                     queryConstraint: constraint,
 
                     text: constraint.text,
-                    arguments: constraint.arguments.map(vertex => this.translate_vertex(structure, vertex, answerIndex, data) as (Entity | Relation | Attribute | Value | VertexUnavailable)),
-                    assigned: this.translate_vertex(structure, constraint.assigned, answerIndex, data) as (Entity | Relation | Attribute | Value | VertexUnavailable),
+                    arguments: constraint.arguments.map(vertex => this.translate_vertex(vertex, answerIndex, data) as (Entity | Relation | Attribute | Value | VertexUnavailable)),
+                    assigned: this.translate_vertex(constraint.assigned, answerIndex, data) as (Entity | Relation | Attribute | Value | VertexUnavailable),
                 }
             }
             case "functionCall": {
@@ -383,8 +187,8 @@ class LogicalGraphBuilder {
                     queryConstraint: constraint,
 
                     name: constraint.name,
-                    arguments: constraint.arguments.map(vertex => this.translate_vertex(structure, vertex, answerIndex, data) as (Entity | Relation | Attribute | Value | VertexUnavailable)),
-                    assigned: constraint.assigned.map(vertex => this.translate_vertex(structure, vertex, answerIndex, data) as (Entity | Relation | Attribute | Value | VertexUnavailable)),
+                    arguments: constraint.arguments.map(vertex => this.translate_vertex(vertex, answerIndex, data) as (Entity | Relation | Attribute | Value | VertexUnavailable)),
+                    assigned: constraint.assigned.map(vertex => this.translate_vertex(vertex, answerIndex, data) as (Entity | Relation | Attribute | Value | VertexUnavailable)),
                 }
             }
             case "comparison" : {
@@ -394,8 +198,8 @@ class LogicalGraphBuilder {
                     queryCoordinates: coordinates,
                     queryConstraint: constraint,
 
-                    lhs: this.translate_vertex(structure, constraint.lhs, answerIndex, data) as (Value | Attribute | VertexUnavailable),
-                    rhs: this.translate_vertex(structure, constraint.lhs, answerIndex, data) as (Value | Attribute | VertexUnavailable),
+                    lhs: this.translate_vertex(constraint.lhs, answerIndex, data) as (Value | Attribute | VertexUnavailable),
+                    rhs: this.translate_vertex(constraint.lhs, answerIndex, data) as (Value | Attribute | VertexUnavailable),
                     comparator: constraint.comparator,
                 }
             }
@@ -406,8 +210,8 @@ class LogicalGraphBuilder {
                     queryCoordinates: coordinates,
                     queryConstraint: constraint,
 
-                    lhs: this.translate_vertex(structure, constraint.lhs, answerIndex, data) as (Concept | VertexUnavailable),
-                    rhs: this.translate_vertex(structure, constraint.lhs, answerIndex, data) as (Concept | VertexUnavailable),
+                    lhs: this.translate_vertex(constraint.lhs, answerIndex, data) as (Concept | VertexUnavailable),
+                    rhs: this.translate_vertex(constraint.lhs, answerIndex, data) as (Concept | VertexUnavailable),
                 }
             }
             case "iid" : {
@@ -417,7 +221,7 @@ class LogicalGraphBuilder {
                     queryCoordinates: coordinates,
                     queryConstraint: constraint,
 
-                    concept: this.translate_vertex(structure, constraint.concept, answerIndex, data) as (Concept | VertexUnavailable),
+                    concept: this.translate_vertex(constraint.concept, answerIndex, data) as (Concept | VertexUnavailable),
                     iid: constraint.iid,
                 }
             }
@@ -428,7 +232,7 @@ class LogicalGraphBuilder {
                     queryCoordinates: coordinates,
                     queryConstraint: constraint,
 
-                    type: this.translate_vertex(structure, constraint.type, answerIndex, data) as (Type | VertexUnavailable),
+                    type: this.translate_vertex(constraint.type, answerIndex, data) as (Type | VertexUnavailable),
                     label: constraint.label,
                 }
             }
@@ -439,7 +243,7 @@ class LogicalGraphBuilder {
                     queryCoordinates: coordinates,
                     queryConstraint: constraint,
 
-                    attributeType: this.translate_vertex(structure, constraint.attributeType, answerIndex, data) as (AttributeType| VertexUnavailable),
+                    attributeType: this.translate_vertex(constraint.attributeType, answerIndex, data) as (AttributeType| VertexUnavailable),
                     valueType: constraint.valueType,
                 }
             }
@@ -450,15 +254,97 @@ class LogicalGraphBuilder {
                     queryCoordinates: coordinates,
                     queryConstraint: constraint,
 
-                    type: this.translate_vertex(structure, constraint.type, answerIndex, data) as (Type | VertexUnavailable),
+                    type: this.translate_vertex(constraint.type, answerIndex, data) as (Type | VertexUnavailable),
                     kind: constraint.kind,
                 }
             }
             case "or":
             case "not":
             case "try": {
+                // Nested patterns are handled via involvedBlocks
                 return null;
             }
+        }
+    }
+}
+
+export function convertLogicalGraphWith(dataGraph: DataGraph, converter: TypeDBAnswerConverter) {
+    dataGraph.answers.forEach((edgeList, answerIndex) => {
+        edgeList.forEach(edge => {
+            putConstraint(converter, answerIndex, edge);
+        });
+    });
+}
+
+function putConstraint(converter: TypeDBAnswerConverter, answer_index: number, constraint: DataConstraintAny) {
+    switch (constraint.tag) {
+        case "isa":{
+            converter.put_isa(answer_index, constraint);
+            break;
+        }
+        case "isa!":{
+            converter.put_isa_exact(answer_index, constraint);
+            break;
+        }
+        case "has": {
+            converter.put_has(answer_index, constraint);
+            break;
+        }
+        case "links": {
+            converter.put_links(answer_index, constraint);
+            break;
+        }
+        case "sub": {
+            converter.put_sub(answer_index, constraint);
+            break;
+        }
+        case "sub!": {
+            converter.put_sub_exact(answer_index, constraint);
+            break;
+        }
+        case "owns": {
+            converter.put_owns(answer_index, constraint);
+            break;
+        }
+        case "relates": {
+            converter.put_relates(answer_index, constraint);
+            break;
+        }
+        case "plays": {
+            converter.put_plays(answer_index, constraint);
+            break;
+        }
+        case "expression" : {
+            converter.put_expression(answer_index, constraint);
+            break;
+        }
+        case "function" : {
+            converter.put_function(answer_index, constraint);
+            break;
+        }
+        case "kind": {
+            converter.put_kind(answer_index, constraint);
+            break;
+        }
+        case "comparison": {
+            converter.put_comparison(answer_index, constraint);
+            break;
+        }
+        case "is": {
+            converter.put_is(answer_index, constraint);
+            break;
+        }
+        case "iid": {
+            converter.put_iid(answer_index, constraint);
+            break;
+        }
+        case "label": {
+            converter.put_label(answer_index, constraint);
+            break;
+        }
+        case "value": {
+            converter.put_value(answer_index, constraint);
+            break;
         }
     }
 }
